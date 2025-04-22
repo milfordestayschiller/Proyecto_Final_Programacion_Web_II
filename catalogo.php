@@ -9,7 +9,7 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 
 // Obtener todos los libros del catálogo
-$resultado = mysqli_query($conn, "SELECT * FROM LIBROS");
+$resultado = mysqli_query($conn, "SELECT * FROM libros");
 ?>
 
 <!DOCTYPE html>
@@ -38,20 +38,27 @@ $resultado = mysqli_query($conn, "SELECT * FROM LIBROS");
             <td><?= htmlspecialchars($libro['titulo']) ?></td>
             <td><?= htmlspecialchars($libro['autor']) ?></td>
             <td>$<?= number_format($libro['precio'], 2) ?></td>
-            <td><?= $libro['cantidad'] ?></td>
+            <td><?= (int)$libro['cantidad'] ?></td>
             <td>
-              <form method="POST" action="agregar_carrito.php" class="d-flex">
-                <input type="hidden" name="libro_id" value="<?= $libro['ID'] ?>">
-                <input type="number" name="cantidad" min="1" max="<?= $libro['cantidad'] ?>" value="1" class="form-control me-2" style="width: 80px;">
-                <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
-              </form>
+              <?php if ((int)$libro['cantidad'] > 0): ?>
+                <form method="POST" action="agregar_carrito.php" class="d-flex">
+                  <input type="hidden" name="libro_id" value="<?= (int)$libro['id'] ?>">
+                  <input type="number" name="cantidad" min="1" max="<?= (int)$libro['cantidad'] ?>" value="1" class="form-control me-2" style="width: 80px;" required>
+                  <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
+                </form>
+              <?php else: ?>
+                <span class="text-danger">Agotado</span>
+              <?php endif; ?>
             </td>
           </tr>
         <?php endwhile; ?>
       </tbody>
     </table>
-    <a href="carrito.php" class="btn btn-success">Ver Carrito</a>
-    <a href="logout.php" class="btn btn-danger float-end">Cerrar Sesión</a>
+
+    <div class="d-flex justify-content-between">
+      <a href="carrito.php" class="btn btn-success">Ver Carrito</a>
+      <a href="logout.php" class="btn btn-danger">Cerrar Sesión</a>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

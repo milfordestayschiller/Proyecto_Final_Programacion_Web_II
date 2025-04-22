@@ -2,14 +2,40 @@
 session_start();
 include 'conexion.php';
 
+// Validar que el usuario esté logueado
+if (!isset($_SESSION['usuario_id'])) {
+  header("Location: login.php");
+  exit();
+}
+
+// Validar campos recibidos
+if (!isset($_POST['libro_id']) || !isset($_POST['cantidad'])) {
+  die("Error: Datos incompletos.");
+}
+
 $userId = $_SESSION['usuario_id'];
-$libroId = $_POST['libro_id'];
-$cantidad = $_POST['cantidad'];
+$libroId = intval($_POST['libro_id']);
+$cantidad = intval($_POST['cantidad']);
 
-$precio_query = mysqli_query($conn, "SELECT precio FROM LIBROS WHERE ID=$libroId");
-$precio = mysqli_fetch_assoc($precio_query)['precio'];
-$total = $cantidad * $precio;
+// Buscar el libro en la base de datos
+$stmt = $conn->prepare("SELECT precio FROM libros WHERE id = ?");
+$stmt->bind_param("i", $libroId);
+$stmt->execute();
+$result = $stmt->get_result();
 
-mysqli_query($conn, "INSERT INTO CARRITO (usuario_id, libro_id, cantidad, monto_total) VALUES ($userId, $libroId, $cantidad, $total)");
+if ($result->num_rows === 0) {
+  die("Error: Libro no encontrado.");
+}
+
+$libro = $result->fetch_assoc();
+$precio = $libro['precio'];
+$total = $precio * $cantidad;
+
+// Insertar en el carrito
+$insert = $conn->prepare("INSERT INTO carrito (usuario_id, libro_id, cantidad, monto_total) VALUES (?, ?, ?, ?)");
+$insert->bind_param("iiid", $userId, $libroId, $cantidad, $total);
+$insert->execute();
+
 header("Location: carrito.php");
+exit();
 ?>
